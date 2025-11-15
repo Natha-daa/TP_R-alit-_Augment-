@@ -1,12 +1,20 @@
+import 'package:ar_flutter_plugin_2/datatypes/node_types.dart';
+import 'package:ar_flutter_plugin_2/managers/ar_anchor_manager.dart';
+import 'package:ar_flutter_plugin_2/managers/ar_location_manager.dart';
+import 'package:ar_flutter_plugin_2/managers/ar_object_manager.dart';
+import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
+import 'package:ar_flutter_plugin_2/models/ar_node.dart';
 import 'package:flutter/material.dart';
-import 'package:ar_flutter_plugin/ar_flutter_plugin.dart';
+import 'package:ar_flutter_plugin_2/ar_flutter_plugin.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -15,69 +23,75 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key}) : super(key: key);
-
+  const MyHomePage({super.key});
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-ArCoreController arCoreController;
-ArCoreNode node;
+  ARSessionManager? arSessionManager;
+  ARObjectManager? arObjectManager;
+  ARNode? localObjectNode;
 
-void dipsose(){
-  super.dispose();
-  arCoreController.dispose();
-}
-
-_onArCoreViewCreated(ArCoreController controller){
-  arCoreController = controller;
-   _addToon(arCoreController);
-  //arCoreController.onPlaneDetected = _handleOnPlaneDetected;
-}
-
-/*_handleOnPlaneDetected(ArCorePlane plane){
-  if(node!=null){
-    arCoreController.removeNode(nodeName: node.name);
+  @override
+  void dispose() {
+    super.dispose();
+    arSessionManager!.dispose();
   }
-  _addToon(arCoreController, plane);
-}*/
-
-_addToon(ArCoreController controller){
-  final node = ArCoreReferenceNode(
-    name: 'Toon',
-    obcject3DFileName: 'Toon.sfb',
-    scale: vector.Vector3(0.5,0.5,0.5),
-    position: vector.Vector3(0,-1,-1),
-    rotation: vector.Vector4(0,180,0,0),
-  );
-  controller.addArCoreNode(node);
-}
-
- _addSphere(ArCoreController controller, ArCorePlane plane){
-   final material = ArCoreMaterial(color:Colors.red);
-   final sphere = ArCoreSphere(materials:[material], radius:0.2);
-   node = ArCoreNode(
-     name: 'Sphere',
-     shape: sphere,
-     position: plane.centerPose.translation,
-     rotation: plane.centerPose.rotation
-   );
-   controller.addArCoreNode(node);
- }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ArCoreView(onArCoreViewCreated: _onArCoreViewCreated,
-      enableUpdateListener: true,),
+      appBar: AppBar(
+        title: const Text('Local & Web Objects'),
+      ),
+      body: ARView(
+        onARViewCreated: onARViewCreated,
+      ),
     );
+  }
+
+  void onARViewCreated(
+    ARSessionManager arSessionManager,
+    ARObjectManager arObjectManager,
+    ARAnchorManager arAnchorManager,
+    ARLocationManager arLocationManager,
+  ) {
+    this.arSessionManager = arSessionManager;
+    this.arObjectManager = arObjectManager;
+
+    this.arSessionManager!.onInitialize(
+          showFeaturePoints: false,
+          showPlanes: true,
+          showWorldOrigin: true,
+          handleTaps: false,
+        );
+    this.arObjectManager!.onInitialize();
+    _addToon();
+  }
+
+  Future<void> _addToon() async {
+    if (localObjectNode != null) {
+      arObjectManager!.removeNode(localObjectNode!);
+      localObjectNode = null;
+    } else {
+      var newNode = ARNode(
+        type: NodeType.webGLB,
+        uri:
+            'https://github.com/KhronosGroup/glTF-Sample-Models/raw/main/2.0/Duck/glTF-Binary/Duck.glb',
+        scale: vector.Vector3(0.5, 0.5, 0.5),
+        position: vector.Vector3(0, -1, -1),
+        rotation: vector.Vector4(0, 180, 0, 0),
+      );
+      bool? didAddLocalNode = await arObjectManager!.addNode(newNode);
+      localObjectNode = (didAddLocalNode!) ? newNode : null;
+    }
   }
 }

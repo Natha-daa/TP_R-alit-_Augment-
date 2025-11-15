@@ -1,15 +1,24 @@
-// Copyright 2014 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+pluginManagement {
+    def localProperties = new Properties()
+    def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.withReader("UTF-8") { reader ->
+            localProperties.load(reader)
+        }
+    }
 
-include ':app'
+    def flutterSdkPath = localProperties.getProperty("flutter.sdk")
+    assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
 
-def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
-def properties = new Properties()
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
 
-assert localPropertiesFile.exists()
-localPropertiesFile.withReader("UTF-8") { reader -> properties.load(reader) }
+plugins {
+    id "dev.flutter.flutter-gradle-plugin" version "1.0.0" apply false
+}
 
-def flutterSdkPath = properties.getProperty("flutter.sdk")
-assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
-apply from: "$flutterSdkPath/packages/flutter_tools/gradle/app_plugin_loader.gradle"
+include ":app"

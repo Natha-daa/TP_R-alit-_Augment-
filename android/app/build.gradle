@@ -59,12 +59,4 @@ flutter {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.google.ar:core:1.40.0'
-    
-    // Pour Sceneform, utilise ces dépendances modernes :
-    implementation 'com.google.ar.sceneform:filament-android:1.40.0'
-    implementation 'com.google.ar.sceneform:sceneform-base:1.40.0'
-    implementation 'com.google.ar.sceneform:sceneform-core:1.40.0'
-    implementation 'com.google.ar.sceneform:animation:1.40.0'
-    implementation 'com.google.ar.sceneform:rendering:1.40.0'
 }
